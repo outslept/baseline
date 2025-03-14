@@ -11,7 +11,7 @@ export default defineBuildConfig({
       'zod',
       'ofetch',
       'destr',
-      'ufo'
+      'ufo',
     ],
   },
 })

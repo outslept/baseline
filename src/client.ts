@@ -1,21 +1,21 @@
-import { ofetch } from "ofetch";
+import type { BaselineStatus } from './constants'
 import type {
-  WebStatusClientOptions,
-  WebStatusQueryParams,
-  WebStatusAPIResponse,
-  WebStatusFeature,
   BaselineSummary,
+  DateRange,
   FeatureSearchCriteria,
-  DateRange
-} from "./types.js";
-import { BaselineStatuses, API_BASE_URL } from "./constants";
-import { webStatusAPIResponseSchema, webStatusClientOptionsSchema } from "./schemas";
-import { constructQueryUrl, formatDate, formatDateRange } from "./utils";
-import type { BaselineStatus } from "./constants";
+  WebStatusAPIResponse,
+  WebStatusClientOptions,
+  WebStatusFeature,
+  WebStatusQueryParams,
+} from './types.js'
+import { ofetch } from 'ofetch'
+import { API_BASE_URL, BaselineStatuses } from './constants'
+import { webStatusAPIResponseSchema, webStatusClientOptionsSchema } from './schemas'
+import { constructQueryUrl, formatDate, formatDateRange } from './utils'
 
 export class WebStatusClient {
-  private readonly apiBaseUrl: string;
-  private readonly fetchOptions: Record<string, any>;
+  private readonly apiBaseUrl: string
+  private readonly fetchOptions: Record<string, any>
 
   /**
    * Creates a new WebStatusClient instance.
@@ -24,9 +24,9 @@ export class WebStatusClient {
    * @param {Record<string, any>} [options.fetchOptions] - Additional fetch options to pass to the HTTP client.
    */
   constructor(options?: WebStatusClientOptions) {
-    const validatedOptions = options ? webStatusClientOptionsSchema.parse(options) : {};
-    this.apiBaseUrl = validatedOptions.baseUrl ?? API_BASE_URL;
-    this.fetchOptions = validatedOptions.fetchOptions ?? {};
+    const validatedOptions = options ? webStatusClientOptionsSchema.parse(options) : {}
+    this.apiBaseUrl = validatedOptions.baseUrl ?? API_BASE_URL
+    this.fetchOptions = validatedOptions.fetchOptions ?? {}
   }
 
   /**
@@ -36,7 +36,7 @@ export class WebStatusClient {
    * @private
    */
   private constructUrl(params: WebStatusQueryParams): URL {
-    return constructQueryUrl(this.apiBaseUrl, params);
+    return constructQueryUrl(this.apiBaseUrl, params)
   }
 
   /**
@@ -45,17 +45,17 @@ export class WebStatusClient {
    * @returns {Promise<WebStatusAPIResponse>} API response with feature data and metadata.
    */
   public async queryFeatures(
-    params: WebStatusQueryParams
+    params: WebStatusQueryParams,
   ): Promise<WebStatusAPIResponse> {
-    const url = this.constructUrl(params);
+    const url = this.constructUrl(params)
 
     const response = await ofetch<WebStatusAPIResponse>(url.toString(), {
       ...this.fetchOptions,
-      method: "GET",
-      responseType: "json",
-    });
+      method: 'GET',
+      responseType: 'json',
+    })
 
-    return webStatusAPIResponseSchema.parse(response);
+    return webStatusAPIResponseSchema.parse(response)
   }
 
   /**
@@ -64,27 +64,27 @@ export class WebStatusClient {
    * @returns {Promise<WebStatusFeature[]>} Complete list of features across all pages.
    */
   public async fetchAllFeatures(
-    initialParams: WebStatusQueryParams
+    initialParams: WebStatusQueryParams,
   ): Promise<WebStatusFeature[]> {
-    const allFeatures: WebStatusFeature[] = [];
-    let pageToken: string | undefined;
+    const allFeatures: WebStatusFeature[] = []
+    let pageToken: string | undefined
 
     do {
       const currentParams: WebStatusQueryParams = {
         ...initialParams,
         page_token: pageToken,
-      };
-
-      const response = await this.queryFeatures(currentParams);
-
-      if (response.data?.length) {
-        allFeatures.push(...response.data);
       }
 
-      pageToken = response.metadata?.next_page_token;
-    } while (pageToken);
+      const response = await this.queryFeatures(currentParams)
 
-    return allFeatures;
+      if (response.data?.length) {
+        allFeatures.push(...response.data)
+      }
+
+      pageToken = response.metadata?.next_page_token
+    } while (pageToken)
+
+    return allFeatures
   }
 
   /**
@@ -92,7 +92,7 @@ export class WebStatusClient {
    * @returns {Promise<WebStatusFeature[]>} List of newly baselined features.
    */
   public async getNewlyBaselineFeatures(): Promise<WebStatusFeature[]> {
-    return this.fetchAllFeatures({ baseline_status: BaselineStatuses.NEWLY });
+    return this.fetchAllFeatures({ baseline_status: BaselineStatuses.NEWLY })
   }
 
   /**
@@ -100,7 +100,7 @@ export class WebStatusClient {
    * @returns {Promise<WebStatusFeature[]>} List of widely baselined features.
    */
   public async getWidelyBaselineFeatures(): Promise<WebStatusFeature[]> {
-    return this.fetchAllFeatures({ baseline_status: BaselineStatuses.WIDELY });
+    return this.fetchAllFeatures({ baseline_status: BaselineStatuses.WIDELY })
   }
 
   /**
@@ -110,25 +110,25 @@ export class WebStatusClient {
   public async getAllBaselineFeatures(): Promise<WebStatusFeature[]> {
     return this.fetchAllFeatures({
       q: `-baseline_status:${BaselineStatuses.LIMITED}`,
-    });
+    })
   }
 
   /**
    * Retrieves features that reached the specified baseline status within the given date range.
    * @param {DateRange | string} dateRange - Date range to filter by, either as DateRange object or string.
-   * @param {BaselineStatus} [status=BaselineStatuses.WIDELY] - Baseline status to filter by.
+   * @param {BaselineStatus} [status] - Baseline status to filter by.
    * @returns {Promise<WebStatusFeature[]>} List of features matching the criteria.
    */
   public async getBaselineFeaturesByDateRange(
     dateRange: DateRange | string,
-    status: BaselineStatus = BaselineStatuses.WIDELY
+    status: BaselineStatus = BaselineStatuses.WIDELY,
   ): Promise<WebStatusFeature[]> {
-    const formattedRange = formatDateRange(dateRange);
+    const formattedRange = formatDateRange(dateRange)
 
     return this.fetchAllFeatures({
       baseline_status: status,
       baseline_date: formattedRange,
-    });
+    })
   }
 
   /**
@@ -139,19 +139,19 @@ export class WebStatusClient {
    */
   public async getCSSFeatures(
     dateRange?: DateRange | string,
-    status?: BaselineStatus
+    status?: BaselineStatus,
   ): Promise<WebStatusFeature[]> {
-    const params: WebStatusQueryParams = { group: "css" };
+    const params: WebStatusQueryParams = { group: 'css' }
 
     if (status) {
-      params.baseline_status = status;
+      params.baseline_status = status
     }
 
     if (dateRange) {
-      params.baseline_date = formatDateRange(dateRange);
+      params.baseline_date = formatDateRange(dateRange)
     }
 
-    return this.fetchAllFeatures(params);
+    return this.fetchAllFeatures(params)
   }
 
   /**
@@ -162,19 +162,19 @@ export class WebStatusClient {
    */
   public async getJavaScriptFeatures(
     dateRange?: DateRange | string,
-    status?: BaselineStatus
+    status?: BaselineStatus,
   ): Promise<WebStatusFeature[]> {
-    const params: WebStatusQueryParams = { group: "javascript" };
+    const params: WebStatusQueryParams = { group: 'javascript' }
 
     if (status) {
-      params.baseline_status = status;
+      params.baseline_status = status
     }
 
     if (dateRange) {
-      params.baseline_date = formatDateRange(dateRange);
+      params.baseline_date = formatDateRange(dateRange)
     }
 
-    return this.fetchAllFeatures(params);
+    return this.fetchAllFeatures(params)
   }
 
   /**
@@ -183,7 +183,7 @@ export class WebStatusClient {
    * @returns {Promise<WebStatusFeature[]>} Feature matching the ID (as an array).
    */
   public async getFeatureById(featureId: string): Promise<WebStatusFeature[]> {
-    return this.fetchAllFeatures({ id: featureId });
+    return this.fetchAllFeatures({ id: featureId })
   }
 
   /**
@@ -194,15 +194,15 @@ export class WebStatusClient {
    */
   public async getFeaturesByGroup(
     group: string,
-    status?: BaselineStatus
+    status?: BaselineStatus,
   ): Promise<WebStatusFeature[]> {
-    const params: WebStatusQueryParams = { group };
+    const params: WebStatusQueryParams = { group }
 
     if (status) {
-      params.baseline_status = status;
+      params.baseline_status = status
     }
 
-    return this.fetchAllFeatures(params);
+    return this.fetchAllFeatures(params)
   }
 
   /**
@@ -213,225 +213,225 @@ export class WebStatusClient {
    */
   public async getFeaturesBySnapshot(
     snapshot: string,
-    status?: BaselineStatus
+    status?: BaselineStatus,
   ): Promise<WebStatusFeature[]> {
-    const params: WebStatusQueryParams = { snapshot };
+    const params: WebStatusQueryParams = { snapshot }
 
-  if (status) {
-    params.baseline_status = status;
+    if (status) {
+      params.baseline_status = status
+    }
+
+    return this.fetchAllFeatures(params)
   }
 
-  return this.fetchAllFeatures(params);
-}
-
-/**
- * Performs a direct query using a custom query string.
- * @param {string} queryString - Raw query string to use for the search.
- * @returns {Promise<WebStatusFeature[]>} List of features matching the query.
- */
-public async query(queryString: string): Promise<WebStatusFeature[]> {
-  return this.fetchAllFeatures({ q: queryString });
-}
-
-/**
- * Retrieves features matching a set of search criteria.
- * @param {FeatureSearchCriteria} criteria - Search criteria to filter features by.
- * @param {BaselineStatus} [criteria.status] - Baseline status to filter by.
- * @param {DateRange | string} [criteria.dateRange] - Date range to filter by.
- * @param {string} [criteria.group] - Group to filter by.
- * @param {string} [criteria.snapshot] - Snapshot to filter by.
- * @param {string} [criteria.search] - Search query to filter by.
- * @returns {Promise<WebStatusFeature[]>} List of features matching all criteria.
- */
-public async getFeaturesByCriteria(
-  criteria: FeatureSearchCriteria
-): Promise<WebStatusFeature[]> {
-  const params: WebStatusQueryParams = {};
-
-  if (criteria.status) {
-    params.baseline_status = criteria.status;
+  /**
+   * Performs a direct query using a custom query string.
+   * @param {string} queryString - Raw query string to use for the search.
+   * @returns {Promise<WebStatusFeature[]>} List of features matching the query.
+   */
+  public async query(queryString: string): Promise<WebStatusFeature[]> {
+    return this.fetchAllFeatures({ q: queryString })
   }
 
-  if (criteria.dateRange) {
-    params.baseline_date = formatDateRange(criteria.dateRange);
+  /**
+   * Retrieves features matching a set of search criteria.
+   * @param {FeatureSearchCriteria} criteria - Search criteria to filter features by.
+   * @param {BaselineStatus} [criteria.status] - Baseline status to filter by.
+   * @param {DateRange | string} [criteria.dateRange] - Date range to filter by.
+   * @param {string} [criteria.group] - Group to filter by.
+   * @param {string} [criteria.snapshot] - Snapshot to filter by.
+   * @param {string} [criteria.search] - Search query to filter by.
+   * @returns {Promise<WebStatusFeature[]>} List of features matching all criteria.
+   */
+  public async getFeaturesByCriteria(
+    criteria: FeatureSearchCriteria,
+  ): Promise<WebStatusFeature[]> {
+    const params: WebStatusQueryParams = {}
+
+    if (criteria.status) {
+      params.baseline_status = criteria.status
+    }
+
+    if (criteria.dateRange) {
+      params.baseline_date = formatDateRange(criteria.dateRange)
+    }
+
+    if (criteria.group) {
+      params.group = criteria.group
+    }
+
+    if (criteria.snapshot) {
+      params.snapshot = criteria.snapshot
+    }
+
+    if (criteria.search) {
+      params.q = criteria.search
+    }
+
+    return this.fetchAllFeatures(params)
   }
 
-  if (criteria.group) {
-    params.group = criteria.group;
+  /**
+   * Generates a summary of baseline feature counts.
+   * @returns {Promise<BaselineSummary>} Summary containing counts of newly and widely baselined features.
+   */
+  public async getBaselineSummary(): Promise<BaselineSummary> {
+    const [newly, widely] = await Promise.all([
+      this.getNewlyBaselineFeatures(),
+      this.getWidelyBaselineFeatures(),
+    ])
+
+    const summary: BaselineSummary = {
+      newly: newly.length,
+      widely: widely.length,
+      total: newly.length + widely.length,
+    }
+
+    return summary
   }
 
-  if (criteria.snapshot) {
-    params.snapshot = criteria.snapshot;
+  /**
+   * Generates a summary of baseline feature counts grouped by specified categories.
+   * @param {string[]} groups - Array of group names to generate summaries for.
+   * @returns {Promise<BaselineSummary>} Summary containing counts of features by group and baseline status.
+   */
+  public async getBaselineSummaryByGroup(
+    groups: string[],
+  ): Promise<BaselineSummary> {
+    const summary: BaselineSummary = {
+      newly: 0,
+      widely: 0,
+      total: 0,
+      byGroup: {},
+    }
+
+    await Promise.all(
+      groups.map(async (group) => {
+        const [newly, widely] = await Promise.all([
+          this.getFeaturesByGroup(group, BaselineStatuses.NEWLY),
+          this.getFeaturesByGroup(group, BaselineStatuses.WIDELY),
+        ])
+
+        if (!summary.byGroup) {
+          summary.byGroup = {}
+        }
+
+        summary.byGroup[group] = {
+          newly: newly.length,
+          widely: widely.length,
+        }
+
+        summary.newly += newly.length
+        summary.widely += widely.length
+        summary.total += newly.length + widely.length
+      }),
+    )
+
+    return summary
   }
 
-  if (criteria.search) {
-    params.q = criteria.search;
+  /**
+   * Searches for features using a free-text search term.
+   * @param {string} searchTerm - Text to search for within feature data.
+   * @returns {Promise<WebStatusFeature[]>} List of features matching the search term.
+   */
+  public async searchFeatures(searchTerm: string): Promise<WebStatusFeature[]> {
+    return this.query(searchTerm)
   }
 
-  return this.fetchAllFeatures(params);
-}
-
-/**
- * Generates a summary of baseline feature counts.
- * @returns {Promise<BaselineSummary>} Summary containing counts of newly and widely baselined features.
- */
-public async getBaselineSummary(): Promise<BaselineSummary> {
-  const [newly, widely] = await Promise.all([
-    this.getNewlyBaselineFeatures(),
-    this.getWidelyBaselineFeatures(),
-  ]);
-
-  const summary: BaselineSummary = {
-    newly: newly.length,
-    widely: widely.length,
-    total: newly.length + widely.length,
-  };
-
-  return summary;
-}
-
-/**
- * Generates a summary of baseline feature counts grouped by specified categories.
- * @param {string[]} groups - Array of group names to generate summaries for.
- * @returns {Promise<BaselineSummary>} Summary containing counts of features by group and baseline status.
- */
-public async getBaselineSummaryByGroup(
-  groups: string[]
-): Promise<BaselineSummary> {
-  const summary: BaselineSummary = {
-    newly: 0,
-    widely: 0,
-    total: 0,
-    byGroup: {},
-  };
-
-  await Promise.all(
-    groups.map(async (group) => {
-      const [newly, widely] = await Promise.all([
-        this.getFeaturesByGroup(group, BaselineStatuses.NEWLY),
-        this.getFeaturesByGroup(group, BaselineStatuses.WIDELY),
-      ]);
-
-      if (!summary.byGroup) {
-        summary.byGroup = {};
-      }
-
-      summary.byGroup[group] = {
-        newly: newly.length,
-        widely: widely.length,
-      };
-
-      summary.newly += newly.length;
-      summary.widely += widely.length;
-      summary.total += newly.length + widely.length;
+  /**
+   * Retrieves features that were added to the baseline between two specific dates.
+   * @param {string} startDate - Start date in ISO format (YYYY-MM-DD).
+   * @param {string} endDate - End date in ISO format (YYYY-MM-DD).
+   * @param {BaselineStatus} [status] - Baseline status to filter by.
+   * @returns {Promise<WebStatusFeature[]>} List of features added between the specified dates.
+   */
+  public async getFeaturesAddedBetweenDates(
+    startDate: string,
+    endDate: string,
+  status: BaselineStatus = BaselineStatuses.NEWLY,
+  ): Promise<WebStatusFeature[]> {
+    const dateRange = `${startDate}..${endDate}`
+    return this.fetchAllFeatures({
+      baseline_status: status,
+      baseline_date: dateRange,
     })
-  );
+  }
 
-  return summary;
-}
-
-/**
- * Searches for features using a free-text search term.
- * @param {string} searchTerm - Text to search for within feature data.
- * @returns {Promise<WebStatusFeature[]>} List of features matching the search term.
- */
-public async searchFeatures(searchTerm: string): Promise<WebStatusFeature[]> {
-  return this.query(searchTerm);
-}
-
-/**
- * Retrieves features that were added to the baseline between two specific dates.
- * @param {string} startDate - Start date in ISO format (YYYY-MM-DD).
- * @param {string} endDate - End date in ISO format (YYYY-MM-DD).
- * @param {BaselineStatus} [status=BaselineStatuses.NEWLY] - Baseline status to filter by.
- * @returns {Promise<WebStatusFeature[]>} List of features added between the specified dates.
- */
-public async getFeaturesAddedBetweenDates(
-  startDate: string,
-  endDate: string,
-  status: BaselineStatus = BaselineStatuses.NEWLY
-): Promise<WebStatusFeature[]> {
-  const dateRange = `${startDate}..${endDate}`;
-  return this.fetchAllFeatures({
-    baseline_status: status,
-    baseline_date: dateRange,
-  });
-}
-
-/**
- * Retrieves features that were recently added to the baseline within a specified time period.
- * @param {number} [daysBack=90] - Number of days to look back from the current date.
- * @param {BaselineStatus} [status=BaselineStatuses.NEWLY] - Baseline status to filter by.
- * @returns {Promise<WebStatusFeature[]>} List of recently added features.
- */
-public async getRecentFeatures(
+  /**
+   * Retrieves features that were recently added to the baseline within a specified time period.
+   * @param {number} [daysBack] - Number of days to look back from the current date.
+   * @param {BaselineStatus} [status] - Baseline status to filter by.
+   * @returns {Promise<WebStatusFeature[]>} List of recently added features.
+   */
+  public async getRecentFeatures(
   daysBack: number = 90,
-  status: BaselineStatus = BaselineStatuses.NEWLY
-): Promise<WebStatusFeature[]> {
-  const endDate = formatDate(new Date());
-  const startDate = formatDate(
-    new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000)
-  );
+  status: BaselineStatus = BaselineStatuses.NEWLY,
+  ): Promise<WebStatusFeature[]> {
+    const endDate = formatDate(new Date())
+    const startDate = formatDate(
+      new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000),
+    )
 
-  return this.getFeaturesAddedBetweenDates(startDate, endDate, status);
-}
+    return this.getFeaturesAddedBetweenDates(startDate, endDate, status)
+  }
 
-/**
- * Analyzes baseline feature trends over multiple time periods.
- * @param {Array<{label: string, days: number}>} timeframes - Array of timeframes to analyze,
- *        each with a label and number of days to look back.
- * @returns {Promise<Record<string, {newly: number, widely: number, total: number}>>}
- *          Trend data for each timeframe with counts by baseline status.
- */
-public async getBaselineTrends(
-  timeframes: { label: string; days: number }[]
-): Promise<Record<string, { newly: number; widely: number; total: number }>> {
-  const trends: Record<string, { newly: number; widely: number; total: number }> = {};
+  /**
+   * Analyzes baseline feature trends over multiple time periods.
+   * @param {Array<{label: string, days: number}>} timeframes - Array of timeframes to analyze,
+   *        each with a label and number of days to look back.
+   * @returns {Promise<Record<string, {newly: number, widely: number, total: number}>>}
+   *          Trend data for each timeframe with counts by baseline status.
+   */
+  public async getBaselineTrends(
+    timeframes: { label: string, days: number }[],
+  ): Promise<Record<string, { newly: number, widely: number, total: number }>> {
+    const trends: Record<string, { newly: number, widely: number, total: number }> = {}
 
-  await Promise.all(
-    timeframes.map(async ({ label, days }) => {
-      const endDate = formatDate(new Date());
-      const startDate = formatDate(
-        new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-      );
+    await Promise.all(
+      timeframes.map(async ({ label, days }) => {
+        const endDate = formatDate(new Date())
+        const startDate = formatDate(
+          new Date(Date.now() - days * 24 * 60 * 60 * 1000),
+        )
 
-      const [newly, widely] = await Promise.all([
-        this.getFeaturesAddedBetweenDates(startDate, endDate, BaselineStatuses.NEWLY),
-        this.getFeaturesAddedBetweenDates(startDate, endDate, BaselineStatuses.WIDELY)
-      ]);
+        const [newly, widely] = await Promise.all([
+          this.getFeaturesAddedBetweenDates(startDate, endDate, BaselineStatuses.NEWLY),
+          this.getFeaturesAddedBetweenDates(startDate, endDate, BaselineStatuses.WIDELY),
+        ])
 
-      trends[label] = {
-        newly: newly.length,
-        widely: widely.length,
-        total: newly.length + widely.length
-      };
-    })
-  );
+        trends[label] = {
+          newly: newly.length,
+          widely: widely.length,
+          total: newly.length + widely.length,
+        }
+      }),
+    )
 
-  return trends;
-}
+    return trends
+  }
 
-/**
- * Identifies the most common feature groups by feature count.
- * @param {number} [limit=5] - Maximum number of top groups to return.
- * @returns {Promise<Array<{group: string, count: number}>>} List of top feature groups with their counts.
- */
-public async getTopFeatureGroups(limit: number = 5): Promise<Array<{ group: string; count: number }>> {
-  const allFeatures = await this.getAllBaselineFeatures();
+  /**
+   * Identifies the most common feature groups by feature count.
+   * @param {number} [limit] - Maximum number of top groups to return.
+   * @returns {Promise<Array<{group: string, count: number}>>} List of top feature groups with their counts.
+   */
+  public async getTopFeatureGroups(limit: number = 5): Promise<Array<{ group: string, count: number }>> {
+    const allFeatures = await this.getAllBaselineFeatures()
 
-    const groupCounts: Record<string, number> = {};
+    const groupCounts: Record<string, number> = {}
 
-    allFeatures.forEach(feature => {
-      const group = feature.group as string;
+    allFeatures.forEach((feature) => {
+      const group = feature.group as string
       if (group) {
-        groupCounts[group] = (groupCounts[group] ?? 0) + 1;
+        groupCounts[group] = (groupCounts[group] ?? 0) + 1
       }
-    });
+    })
 
     return Object.entries(groupCounts)
       .map(([group, count]) => ({ group, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, limit);
+      .slice(0, limit)
   }
 
   /**
@@ -441,28 +441,28 @@ public async getTopFeatureGroups(limit: number = 5): Promise<Array<{ group: stri
    *          Comparison data for each feature, indexed by ID.
    */
   public async compareFeatureSupport(
-    featureIds: string[]
-  ): Promise<Record<string, { name: string; status: BaselineStatus; date?: string }>> {
-    const result: Record<string, { name: string; status: BaselineStatus; date?: string }> = {};
+    featureIds: string[],
+  ): Promise<Record<string, { name: string, status: BaselineStatus, date?: string }>> {
+    const result: Record<string, { name: string, status: BaselineStatus, date?: string }> = {}
 
     await Promise.all(
       featureIds.map(async (id) => {
-        const features = await this.getFeatureById(id);
+        const features = await this.getFeatureById(id)
 
         if (features && features.length > 0) {
-          const feature = features[0];
+          const feature = features[0]
           if (feature) {
             result[id] = {
               name: feature.name,
               status: feature.baseline?.status ?? BaselineStatuses.LIMITED,
-              date: feature.baseline?.high_date
-            };
+              date: feature.baseline?.high_date,
+            }
           }
         }
-      })
-    );
+      }),
+    )
 
-    return result;
+    return result
   }
 }
 
@@ -472,7 +472,7 @@ public async getTopFeatureGroups(limit: number = 5): Promise<Array<{ group: stri
  * @returns {Promise<WebStatusClient>} A configured WebStatusClient instance.
  */
 export async function createWebStatusClient(
-  options?: WebStatusClientOptions
+  options?: WebStatusClientOptions,
 ): Promise<WebStatusClient> {
-  return new WebStatusClient(options);
+  return new WebStatusClient(options)
 }

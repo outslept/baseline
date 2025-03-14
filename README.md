@@ -17,32 +17,32 @@ A TypeScript client for interacting with the Web Status API, providing comprehen
 ## Quick Start
 
 ```typescript
-import { createWebStatusClient } from 'browser-compatibility/lib/web-baseline';
+import { createWebStatusClient } from 'browser-compatibility/lib/web-baseline'
 
 async function main() {
   // Create a client instance
-  const client = await createWebStatusClient();
+  const client = await createWebStatusClient()
 
   // Get all newly baselined features
-  const newFeatures = await client.getNewlyBaselineFeatures();
-  console.log(`Found ${newFeatures.length} newly baselined features`);
+  const newFeatures = await client.getNewlyBaselineFeatures()
+  console.log(`Found ${newFeatures.length} newly baselined features`)
 
   // Get a summary of baseline status across all features
-  const summary = await client.getBaselineSummary();
-  console.log(`Total baseline features: ${summary.total}`);
-  console.log(`- Newly supported: ${summary.newly}`);
-  console.log(`- Widely supported: ${summary.widely}`);
+  const summary = await client.getBaselineSummary()
+  console.log(`Total baseline features: ${summary.total}`)
+  console.log(`- Newly supported: ${summary.newly}`)
+  console.log(`- Widely supported: ${summary.widely}`)
 
   // Get recent CSS features
   const recentCSSFeatures = await client.getCSSFeatures(
     { start: '2023-01-01', end: '2023-12-31' }
-  );
+  )
 
   // Search for specific features
-  const asyncFeatures = await client.searchFeatures('async');
+  const asyncFeatures = await client.searchFeatures('async')
 }
 
-main().catch(console.error);
+main().catch(console.error)
 ```
 
 ## API Reference
@@ -51,15 +51,15 @@ main().catch(console.error);
 
 ```typescript
 // Default configuration
-const client = await createWebStatusClient();
+const client = await createWebStatusClient()
 
 // Custom configuration
 const client = await createWebStatusClient({
   baseUrl: 'https://custom-api.example.com/v1/features',
   fetchOptions: {
-    headers: { 'Authorization': 'Bearer token' }
+    headers: { Authorization: 'Bearer token' }
   }
-});
+})
 ```
 
 ### Core Methods
@@ -96,8 +96,8 @@ Date ranges can be specified in two ways:
 
 ```typescript
 // As an object
-const dateRange = { start: '2023-01-01', end: '2023-12-31' };
+const dateRange = { start: '2023-01-01', end: '2023-12-31' }
 
 // As a string
-const dateRange = '2023-01-01..2023-12-31';
+const dateRange = '2023-01-01..2023-12-31'
 ```
