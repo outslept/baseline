@@ -2,16 +2,8 @@ import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
   entries: [
-    'src/index',
+    'index.ts',
   ],
-  declaration: 'node16',
+  declaration: 'node20',
   clean: true,
-  rollup: {
-    inlineDependencies: [
-      'zod',
-      'ofetch',
-      'destr',
-      'ufo',
-    ],
-  },
 })
