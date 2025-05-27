@@ -1,5 +1,5 @@
 {
-  "name": "@hlab/baseline",
+  "name": "baseline",
   "version": "0.0.0",
   "private": true,
   "packageManager": "pnpm@10.4.1",
