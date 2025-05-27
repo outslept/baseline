@@ -1,5 +1,7 @@
-import antfu from '@antfu/eslint-config'
+import { sxzz } from "@sxzz/eslint-config";
 
-export default antfu({
-
-})
+export default sxzz({
+  markdown: true,
+  sortKeys: true,
+  prettier: true,
+});
