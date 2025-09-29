@@ -5,20 +5,20 @@ import {
   type FeatureQuery,
   type QueryBuilder,
   type QueryInput,
-} from "./query";
+} from './query'
 
 export type BrowserKey =
-  | "chrome"
-  | "chrome_android"
-  | "edge"
-  | "firefox"
-  | "firefox_android"
-  | "safari"
-  | "safari_ios";
+  | 'chrome'
+  | 'chrome_android'
+  | 'edge'
+  | 'firefox'
+  | 'firefox_android'
+  | 'safari'
+  | 'safari_ios'
 
 export interface BrowserInfo {
   date?: string;
-  status: string; 
+  status: string;
   version?: string;
 }
 
@@ -73,30 +73,30 @@ export interface RequestOptions {
 }
 
 export class HTTPError extends Error {
-  name = "HTTPError";
-  status: number;
-  statusText: string;
-  url: string;
-  body?: unknown;
+  name = 'HTTPError'
+  status: number
+  statusText: string
+  url: string
+  body?: unknown
 
-  constructor(url: string, status: number, statusText: string, body?: unknown) {
-    super(`HTTP ${status} ${statusText}`);
-    this.status = status;
-    this.statusText = statusText;
-    this.url = url;
-    this.body = body;
+  constructor (url: string, status: number, statusText: string, body?: unknown) {
+    super(`HTTP ${status} ${statusText}`)
+    this.status = status
+    this.statusText = statusText
+    this.url = url
+    this.body = body
   }
 }
 
 export class TimeoutError extends Error {
-  name = "TimeoutError";
-  constructor(public ms: number) {
-    super(`Request timed out after ${ms}ms`);
+  name = 'TimeoutError'
+  constructor (public ms: number) {
+    super(`Request timed out after ${ms}ms`)
   }
 }
 
 const DEFAULTS = {
-  baseURL: "https://api.webstatus.dev/v1/features",
+  baseURL: 'https://api.webstatus.dev/v1/features',
   timeout: 30_000,
   retry: 3,
   backoff: {
@@ -105,36 +105,36 @@ const DEFAULTS = {
     max: 5000,
     jitter: true,
   },
-};
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-function isRetryableStatus(code: number) {
-  return code === 429 || (code >= 500 && code <= 599);
 }
 
-function computeDelay(
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+function isRetryableStatus (code: number) {
+  return code === 429 || (code >= 500 && code <= 599)
+}
+
+function computeDelay (
   attempt: number,
   base: number,
   factor: number,
   max: number,
-  jitter: boolean,
+  jitter: boolean
 ) {
-  const exp = Math.min(max, Math.round(base * Math.pow(factor, attempt)));
-  if (!jitter) return exp;
-  const sway = Math.round(exp * 0.2 * Math.random()); // +/- 20%
-  return Math.max(0, exp - sway);
+  const exp = Math.min(max, Math.round(base * Math.pow(factor, attempt)))
+  if (!jitter) return exp
+  const sway = Math.round(exp * 0.2 * Math.random()) // +/- 20%
+  return Math.max(0, exp - sway)
 }
 
-function mergeHeaders(
+function mergeHeaders (
   a?: HeadersInit,
-  b?: HeadersInit,
+  b?: HeadersInit
 ): HeadersInit | undefined {
-  if (!a && !b) return undefined;
-  const h = new Headers();
-  if (a) new Headers(a).forEach((v, k) => h.set(k, v));
-  if (b) new Headers(b).forEach((v, k) => h.set(k, v));
-  return h;
+  if (!a && !b) return undefined
+  const h = new Headers()
+  if (a) new Headers(a).forEach((v, k) => h.set(k, v))
+  if (b) new Headers(b).forEach((v, k) => h.set(k, v))
+  return h
 }
 
 export interface WebStatusClient {
@@ -169,113 +169,113 @@ export interface WebStatusClient {
   ): Promise<Feature[]>;
 }
 
-export function createWebStatusClient(
-  options: ClientOptions = {},
+export function createWebStatusClient (
+  options: ClientOptions = {}
 ): WebStatusClient {
-  const baseURL = options.baseURL ?? DEFAULTS.baseURL;
-  const defaultTimeout = options.timeout ?? DEFAULTS.timeout;
-  const defaultRetry = options.retry ?? DEFAULTS.retry;
+  const baseURL = options.baseURL ?? DEFAULTS.baseURL
+  const defaultTimeout = options.timeout ?? DEFAULTS.timeout
+  const defaultRetry = options.retry ?? DEFAULTS.retry
   const backoff = {
     base: options.backoff?.base ?? DEFAULTS.backoff.base,
     factor: options.backoff?.factor ?? DEFAULTS.backoff.factor,
     max: options.backoff?.max ?? DEFAULTS.backoff.max,
     jitter: options.backoff?.jitter ?? DEFAULTS.backoff.jitter,
-  };
+  }
   const defaultHeaders = mergeHeaders(
     options.headers,
-    options.userAgent ? { "user-agent": options.userAgent } : undefined,
-  );
+    options.userAgent ? { 'user-agent': options.userAgent } : undefined
+  )
 
-  const $fetch = options.fetch ?? (globalThis as any).fetch;
+  const $fetch = options.fetch ?? (globalThis as any).fetch
   if (!$fetch) {
     throw new Error(
-      "No fetch implementation found. Provide options.fetch or use an environment with global fetch.",
-    );
+      'No fetch implementation found. Provide options.fetch or use an environment with global fetch.'
+    )
   }
 
-  async function requestPage(
+  async function requestPage (
     query: string,
     pageToken?: string,
-    opts: RequestOptions = {},
+    opts: RequestOptions = {}
   ): Promise<ApiResponse> {
-    const url = new URL(baseURL);
-    url.searchParams.set("q", query ?? "");
-    if (pageToken) url.searchParams.set("page_token", pageToken);
+    const url = new URL(baseURL)
+    url.searchParams.set('q', query ?? '')
+    if (pageToken) url.searchParams.set('page_token', pageToken)
 
-    const headers = mergeHeaders(defaultHeaders, opts.headers);
-    const retry = opts.retry ?? defaultRetry;
-    const timeout = opts.timeout ?? defaultTimeout;
+    const headers = mergeHeaders(defaultHeaders, opts.headers)
+    const retry = opts.retry ?? defaultRetry
+    const timeout = opts.timeout ?? defaultTimeout
 
-    let lastError: unknown;
+    let lastError: unknown
 
     for (let attempt = 0; attempt <= retry; attempt++) {
-      const controller = new AbortController();
-      const userSignal = opts.signal;
+      const controller = new AbortController()
+      const userSignal = opts.signal
 
-      let timeoutId: any;
-      let onAbort: (() => void) | undefined;
-      let timedOut = false;
+      let timeoutId: any
+      let onAbort: (() => void) | undefined
+      let timedOut = false
 
       try {
         if (userSignal) {
           if (userSignal.aborted) {
-            const err = new Error("Aborted");
-            (err as any).name = "AbortError";
-            throw err;
+            const err = new Error('Aborted');
+            (err as any).name = 'AbortError'
+            throw err
           }
-          onAbort = () => controller.abort();
-          userSignal.addEventListener("abort", onAbort);
+          onAbort = () => controller.abort()
+          userSignal.addEventListener('abort', onAbort)
         }
 
         timeoutId = setTimeout(() => {
-          timedOut = true;
-          controller.abort();
-        }, timeout);
+          timedOut = true
+          controller.abort()
+        }, timeout)
 
         const res = await $fetch(url.toString(), {
           signal: controller.signal,
           headers,
-        });
+        })
 
-        clearTimeout(timeoutId);
-        if (onAbort && userSignal) userSignal.removeEventListener("abort", onAbort);
+        clearTimeout(timeoutId)
+        if (onAbort && userSignal) userSignal.removeEventListener('abort', onAbort)
 
         if (!res.ok) {
-          let body: unknown;
+          let body: unknown
           try {
-            body = await res.clone().json();
+            body = await res.clone().json()
           } catch {
             try {
-              body = await res.clone().text();
+              body = await res.clone().text()
             } catch {
-              body = undefined;
+              body = undefined
             }
           }
           const err = new HTTPError(
             url.toString(),
             res.status,
             res.statusText,
-            body,
-          );
+            body
+          )
           if (attempt < retry && isRetryableStatus(res.status)) {
             const delay = computeDelay(
               attempt,
               backoff.base,
               backoff.factor,
               backoff.max,
-              backoff.jitter,
-            );
-            await sleep(delay);
-            continue;
+              backoff.jitter
+            )
+            await sleep(delay)
+            continue
           }
-          throw err;
+          throw err
         }
 
-        const data = (await res.json()) as ApiResponse;
-        return data;
+        const data = (await res.json()) as ApiResponse
+        return data
       } catch (err: any) {
-        clearTimeout(timeoutId);
-        if (onAbort && userSignal) userSignal.removeEventListener("abort", onAbort);
+        clearTimeout(timeoutId)
+        if (onAbort && userSignal) userSignal.removeEventListener('abort', onAbort)
 
         if (timedOut) {
           if (attempt < retry) {
@@ -284,125 +284,125 @@ export function createWebStatusClient(
               backoff.base,
               backoff.factor,
               backoff.max,
-              backoff.jitter,
-            );
-            await sleep(delay);
-            continue;
+              backoff.jitter
+            )
+            await sleep(delay)
+            continue
           }
-          throw new TimeoutError(timeout);
+          throw new TimeoutError(timeout)
         }
 
-        if (err?.name === "AbortError") {
-          throw err;
+        if (err?.name === 'AbortError') {
+          throw err
         }
 
-        lastError = err;
+        lastError = err
         if (attempt < retry) {
           const delay = computeDelay(
             attempt,
             backoff.base,
             backoff.factor,
             backoff.max,
-            backoff.jitter,
-          );
-          await sleep(delay);
-          continue;
+            backoff.jitter
+          )
+          await sleep(delay)
+          continue
         }
-        throw lastError;
+        throw lastError
       }
     }
     // this should be unreacheable, I wonder how to build api differently to avoid this
-    throw lastError ?? new Error("Unknown request failure");
+    throw lastError ?? new Error('Unknown request failure')
   }
 
-  async function* pages(
+  async function * pages (
     query?: QueryInput,
-    opts?: RequestOptions,
+    opts?: RequestOptions
   ): AsyncGenerator<ApiResponse> {
-    const qstr = normalizeQuery(query);
-    let token: string | undefined = undefined;
+    const qstr = normalizeQuery(query)
+    let token: string | undefined
 
     do {
-      const res = await requestPage(qstr, token, opts);
-      yield res;
-      token = res.metadata?.next_page_token;
-      if (!token || (res.data && res.data.length === 0)) break;
-    } while (true);
+      const res = await requestPage(qstr, token, opts)
+      yield res
+      token = res.metadata?.next_page_token
+      if (!token || (res.data && res.data.length === 0)) break
+    } while (true)
   }
 
-  async function* stream(
+  async function * stream (
     query?: QueryInput,
-    opts?: RequestOptions,
+    opts?: RequestOptions
   ): AsyncGenerator<Feature> {
     for await (const page of pages(query, opts)) {
-      for (const item of page.data) yield item;
+      for (const item of page.data) yield item
     }
   }
 
-  async function features(
+  async function features (
     query?: QueryInput,
-    opts?: RequestOptions,
+    opts?: RequestOptions
   ): Promise<Feature[]> {
-    const out: Feature[] = [];
-    for await (const item of stream(query, opts)) out.push(item);
-    return out;
+    const out: Feature[] = []
+    for await (const item of stream(query, opts)) out.push(item)
+    return out
   }
 
-  async function feature(
+  async function feature (
     id: string,
-    opts?: RequestOptions,
+    opts?: RequestOptions
   ): Promise<Feature | null> {
-    const list = await features(q().id(id), opts);
-    return list[0] || null;
+    const list = await features(q().id(id), opts)
+    return list[0] || null
   }
 
-  async function baseline(
+  async function baseline (
     status: BaselineStatus,
-    opts?: RequestOptions,
+    opts?: RequestOptions
   ): Promise<Feature[]> {
-    return features(q().baseline(status), opts);
+    return features(q().baseline(status), opts)
   }
 
-  async function byGroup(
+  async function byGroup (
     group: string,
     status?: BaselineStatus,
-    opts?: RequestOptions,
+    opts?: RequestOptions
   ): Promise<Feature[]> {
-    const qb = q().group(group);
-    if (status) qb.baseline(status);
-    return features(qb, opts);
+    const qb = q().group(group)
+    if (status) qb.baseline(status)
+    return features(qb, opts)
   }
 
-  async function css(
+  async function css (
     status?: BaselineStatus,
-    opts?: RequestOptions,
+    opts?: RequestOptions
   ): Promise<Feature[]> {
-    return byGroup("css", status, opts);
+    return byGroup('css', status, opts)
   }
 
-  async function javascript(
+  async function javascript (
     status?: BaselineStatus,
-    opts?: RequestOptions,
+    opts?: RequestOptions
   ): Promise<Feature[]> {
-    return byGroup("javascript", status, opts);
+    return byGroup('javascript', status, opts)
   }
 
-  async function html(
+  async function html (
     status?: BaselineStatus,
-    opts?: RequestOptions,
+    opts?: RequestOptions
   ): Promise<Feature[]> {
-    return byGroup("html", status, opts);
+    return byGroup('html', status, opts)
   }
 
-  async function inDateRange(
+  async function inDateRange (
     start: string,
     end: string,
     status?: BaselineStatus,
-    opts?: RequestOptions,
+    opts?: RequestOptions
   ): Promise<Feature[]> {
-    const qb = q().range(start, end);
-    if (status) qb.baseline(status);
-    return features(qb, opts);
+    const qb = q().range(start, end)
+    if (status) qb.baseline(status)
+    return features(qb, opts)
   }
 
   return {
@@ -416,8 +416,8 @@ export function createWebStatusClient(
     javascript,
     html,
     inDateRange,
-  };
+  }
 }
 
-export { q, normalizeQuery };
-export type { BaselineStatus, FeatureQuery, QueryBuilder, QueryInput };
+export { q, normalizeQuery }
+export type { BaselineStatus, FeatureQuery, QueryBuilder, QueryInput }
