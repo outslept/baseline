@@ -15,19 +15,18 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/client.cjs",
+  "module": "./dist/client.js",
+  "types": "./dist/client.d.cts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
-      "import": "./dist/index.js"
+      "types": "./dist/client.d.cts",
+      "import": "./dist/client.js",
+      "require": "./dist/client.cjs"
     }
   },
   "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch",
+    "build": "zshy",
     "prepublishOnly": "pnpm build",
     "lint:fix": "eslint . --fix",
     "lint": "eslint .",
@@ -38,16 +37,7 @@
     "@sxzz/eslint-config": "^7.0.1",
     "@types/node": "^22.15.21",
     "eslint": "^9.24.0",
-    "lint-staged": "^15.5.1",
-    "publint": "^0.3.12",
-    "simple-git-hooks": "^2.13.0",
-    "tsdown": "^0.12.3",
-    "tsx": "^4.19.4"
+    "zshy": "^0.4.2"
   },
-  "simple-git-hooks": {
-    "pre-commit": "pnpm i --frozen-lockfile --ignore-scripts --offline && npx lint-staged"
-  },
-  "lint-staged": {
-    "*": "eslint --fix"
-  }
+  "zshy": "src/client.ts"
 }
