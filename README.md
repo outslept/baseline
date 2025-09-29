@@ -1,71 +1,122 @@
-# `baseline`
+# baseline
 
-A lightweight TypeScript client for the Web Platform Status API, providing easy access to browser compatibility data and Baseline feature status.
+A tiny, readable TypeScript client for the Web Platform Status API. Fetch Baseline status and browser compatibility data with a clean, chainable API.
 
-## Quick Start
+# Quick Start
 
-```typescript
-import { BaselineAPI } from '№'
+```ts
+import { createWebStatusClient, q } from "#";
 
-const api = new BaselineAPI()
+const api = createWebStatusClient();
 
 // Get all widely supported features
-const widelySupported = await api.baseline('widely')
+const widelySupported = await api.baseline("widely");
 
 // Get CSS features
-const cssFeatures = await api.css()
+const cssFeatures = await api.css();
 
 // Get a specific feature by ID
-const feature = await api.byId('css-grid')
+const feature = await api.feature("css-grid");
 
 // Get features by group with status filter
-const newJSFeatures = await api.byGroup('javascript', 'newly')
+const newJSFeatures = await api.byGroup("javascript", "newly");
+
+// Use the query builder for flexible searches
+const recentNewCSS = await api.features(
+  q().group("css").baseline("newly").range("2023-01-01", "2024-12-31"),
+);
 ```
 
-## API Reference
+# API
 
-### Constructor
-
-```typescript
-new BaselineAPI(options?)
+```ts
+import { createWebStatusClient, q } from "#";
+const api = createWebStatusClient(options?);
 ```
 
-**Options:**
+- options:
+  - baseURL?: string (default: https://api.webstatus.dev/v1/features)
+  - timeout?: number (ms, per attempt, default: 30000)
+  - retry?: number (attempts, default: 3)
+  - backoff?: { base?: number; factor?: number; max?: number; jitter?: boolean }
+  - headers?: HeadersInit
+  - userAgent?: string
+  - fetch?: typeof fetch (to inject your own)
 
--   `endpoint?: string` - Custom API endpoint (default: `https://api.webstatus.dev/v1/features`)
--   `timeout?: number` - Request timeout in milliseconds (default: 30000)
--   `retry?: number` - Number of retry attempts (default: 3)
+Client methods:
+- features(query?, opts?): Promise<Feature[]>
+- feature(id, opts?): Promise<Feature | null>
+- baseline(status, opts?): Promise<Feature[]>
+- byGroup(group, status?, opts?): Promise<Feature[]>
+- css(status?, opts?): Promise<Feature[]>
+- javascript(status?, opts?): Promise<Feature[]>
+- html(status?, opts?): Promise<Feature[]>
+- inDateRange(start, end, status?, opts?): Promise<Feature[]>
+- pages(query?, opts?): AsyncGenerator<ApiResponse>
+- stream(query?, opts?): AsyncGenerator<Feature>
 
-### Methods
+Request options (opts):
+- signal?: AbortSignal
+- headers?: HeadersInit
+- timeout?: number
+- retry?: number
 
-#### `features(params?): Promise<Feature[]>`
+# Query builder
 
-Fetch features with custom query parameters.
+```ts
+import { q } from "#";
 
-#### `baseline(status): Promise<Feature[]>`
+const query = q()
+  .baseline("widely")
+  .group("css")
+  .range("2023-01-01", "2024-12-31");
 
-Get features by Baseline status: `'limited'`, `'newly'`, or `'widely'`.
+const str = query.toString(); // "baseline_status:widely AND group:css AND baseline_date:2023-01-01..2024-12-31"
+const out = await api.features(query);
+```
 
-#### `byGroup(group, status?): Promise<Feature[]>`
+Shortcuts:
+- q().id("css.subgrid")
+- q().snapshot("ecmascript-2023")
+- q().custom('-baseline_status:limited') // negation
+- q().custom('baseline_status:newly OR baseline_status:widely') // OR
 
-Get features by technology group with optional status filter.
+# Streaming and pagination
 
-#### `css(status?): Promise<Feature[]>`
+```ts
+// Stream features one by one
+for await (const f of api.stream(q().baseline("newly"))) {
+  console.log(f.feature_id, f.name);
+}
 
-Get CSS features with optional status filter.
+// Or page-by-page
+for await (const page of api.pages(q().group("javascript"))) {
+  console.log("count:", page.data.length, "total:", page.metadata?.total);
+}
+```
 
-#### `javascript(status?): Promise<Feature[]>`
+The API paginates responses. Use pages() or stream() to iterate until metadata.next_page_token is absent. metadata.total may be present for total matches.
 
-Get JavaScript features with optional status filter.
+# Data shape
 
-#### `html(status?): Promise<Feature[]>`
+The HTTP API returns:
+- ApiResponse
+  - data: Feature[]
+  - metadata?: { next_page_token?: string; total?: number }
 
-Get HTML features with optional status filter.
+Feature highlights:
+- feature_id: string
+- name: string
+- baseline: { status: "limited" | "newly" | "widely"; low_date?: string; high_date?: string }
+- spec: { links: { link: string }[] }
+- browser_implementations: partial record of:
+  - chrome, chrome_android, edge, firefox, firefox_android, safari, safari_ios
+  - each: { date?: string; status: string; version?: string }
+- Optional extras that may appear:
+  - developer_signals?: { link: string; upvotes?: number }
+  - usage?: per-browser usage, e.g. { chrome?: { daily?: number } }
+  - wpt?: { experimental?: { [browser]: { score?: number; metadata?: any } }, stable?: ... }
 
-#### `byId(id): Promise<Feature | null>`
+# License
 
-Get a specific feature by its ID.
-
-#### `inDateRange(start, end, status?): Promise<Feature[]>`
-
-Get features within a date range with optional status filter.
+MIT
