@@ -34,9 +34,9 @@
     "prepare": "simple-git-hooks"
   },
   "devDependencies": {
-    "@sxzz/eslint-config": "^7.0.1",
     "@types/node": "^22.15.21",
     "eslint": "^9.24.0",
+    "neostandard": "^0.12.2",
     "zshy": "^0.4.2"
   },
   "zshy": "src/client.ts"

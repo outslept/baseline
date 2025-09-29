@@ -1,7 +1,6 @@
-import { sxzz } from "@sxzz/eslint-config";
+import neostandard from "neostandard";
 
-export default sxzz({
-  markdown: true,
-  sortKeys: true,
-  prettier: true,
+export default neostandard({
+  ts: true,
 });
+ 
