@@ -30,8 +30,7 @@
     "prepublishOnly": "pnpm build",
     "lint:fix": "eslint . --fix",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "prepare": "simple-git-hooks"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
