@@ -2,7 +2,7 @@
   "name": "baseline",
   "version": "0.0.0",
   "private": true,
-  "packageManager": "pnpm@10.4.1",
+  "packageManager": "pnpm@10.17.1",
   "description": "A lightweight TypeScript client for querying the Web Platform Status API.",
   "type": "module",
   "keywords": [
