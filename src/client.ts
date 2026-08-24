@@ -64,14 +64,19 @@ interface LinkedSignals {
   isTimedOut: () => boolean;
 }
 
-function linkSignals(userSignal: AbortSignal | undefined, timeoutMs: number | undefined): LinkedSignals {
+function linkSignals(
+  userSignal: AbortSignal | undefined,
+  timeoutMs: number | undefined,
+): LinkedSignals {
   const controller = new AbortController();
   let timedOut = false;
 
-  const timeoutId = timeoutMs ? setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, timeoutMs) : undefined;
+  const timeoutId = timeoutMs
+    ? setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, timeoutMs)
+    : undefined;
 
   const onAbort = () => controller.abort();
   userSignal?.addEventListener("abort", onAbort, { once: true });
@@ -141,7 +146,13 @@ export function createWebStatusClient(options: ClientOptions = {}): WebStatusCli
           });
 
           if (attempt < retry && isRetryableStatus(res.status)) {
-            const delay = computeDelay(attempt, backoff.base, backoff.factor, backoff.max, backoff.jitter);
+            const delay = computeDelay(
+              attempt,
+              backoff.base,
+              backoff.factor,
+              backoff.max,
+              backoff.jitter,
+            );
             await sleep(delay, opts.signal);
             continue;
           }
@@ -157,7 +168,13 @@ export function createWebStatusClient(options: ClientOptions = {}): WebStatusCli
 
         if (isTimedOut()) {
           if (attempt < retry) {
-            const delay = computeDelay(attempt, backoff.base, backoff.factor, backoff.max, backoff.jitter);
+            const delay = computeDelay(
+              attempt,
+              backoff.base,
+              backoff.factor,
+              backoff.max,
+              backoff.jitter,
+            );
             await sleep(delay, opts.signal);
             continue;
           }
@@ -165,7 +182,13 @@ export function createWebStatusClient(options: ClientOptions = {}): WebStatusCli
         }
 
         if (attempt < retry) {
-          const delay = computeDelay(attempt, backoff.base, backoff.factor, backoff.max, backoff.jitter);
+          const delay = computeDelay(
+            attempt,
+            backoff.base,
+            backoff.factor,
+            backoff.max,
+            backoff.jitter,
+          );
           await sleep(delay, opts.signal);
           continue;
         }
