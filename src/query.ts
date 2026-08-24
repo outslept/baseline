@@ -1,30 +1,16 @@
-export type BaselineStatus = "limited" | "newly" | "widely";
+import type { BaselineStatus, FeatureQuery, QueryBuilder, QueryInput } from "./types";
 
-export interface FeatureQuery {
-  baselineStatus?: BaselineStatus;
-  baselineDateRange?: { start: string; end: string };
-  featureId?: string;
-  group?: string;
-  snapshot?: string;
-  customQuery?: string;
+function isString(x: unknown): x is string {
+  return typeof x === "string";
 }
 
-export interface QueryBuilder {
-  baseline(status: BaselineStatus): QueryBuilder;
-  range(start: string, end: string): QueryBuilder;
-  id(id: string): QueryBuilder;
-  group(group: string): QueryBuilder;
-  snapshot(s: string): QueryBuilder;
-  custom(q: string): QueryBuilder;
-  andRaw(term: string): QueryBuilder;
-  toString(): string;
-  clone(): QueryBuilder;
-}
-
-export type QueryInput = string | FeatureQuery | QueryBuilder;
-
-function isQueryBuilder(x: any): x is QueryBuilder {
-  return !!x && typeof x.toString === "function" && typeof x.clone === "function";
+function isQueryBuilder(x: unknown): x is QueryBuilder {
+  return (
+    typeof x === "object" &&
+    x !== null &&
+    typeof (x as QueryBuilder).toString === "function" &&
+    typeof (x as QueryBuilder).clone === "function"
+  );
 }
 
 export function q(initial?: QueryInput): QueryBuilder {
@@ -37,37 +23,36 @@ export function q(initial?: QueryInput): QueryBuilder {
   };
 
   const quote = (v: string) => {
-    // quote if contains whitespace or quotes/colons/parentheses
     if (!/["\s:()]/.test(v)) return v;
     return `"${v.replace(/"/g, '\\"')}"`;
   };
 
   const api: QueryBuilder = {
-    baseline(status) {
+    baseline(status: BaselineStatus) {
       push(`baseline_status:${status}`);
       return api;
     },
-    range(start, end) {
+    range(start: string, end: string) {
       push(`baseline_date:${start}..${end}`);
       return api;
     },
-    id(id) {
+    id(id: string) {
       push(`id:${quote(id)}`);
       return api;
     },
-    group(group) {
+    group(group: string) {
       push(`group:${quote(group)}`);
       return api;
     },
-    snapshot(s) {
+    snapshot(s: string) {
       push(`snapshot:${quote(s)}`);
       return api;
     },
-    custom(qStr) {
+    custom(qStr: string) {
       push(qStr);
       return api;
     },
-    andRaw(term) {
+    andRaw(term: string) {
       push(term);
       return api;
     },
@@ -76,23 +61,25 @@ export function q(initial?: QueryInput): QueryBuilder {
     },
     clone() {
       const copy = q();
-      terms.forEach((t) => (copy as any).andRaw(t));
+      terms.forEach((t) => copy.andRaw(t));
       return copy;
     },
   };
 
-  if (typeof initial === "string") {
-    api.custom(initial);
-  } else if (isQueryBuilder(initial)) {
-    api.custom(initial.toString());
-  } else if (initial && typeof initial === "object") {
-    const i = initial as FeatureQuery;
-    if (i.baselineStatus) api.baseline(i.baselineStatus);
-    if (i.baselineDateRange) api.range(i.baselineDateRange.start, i.baselineDateRange.end);
-    if (i.featureId) api.id(i.featureId);
-    if (i.group) api.group(i.group);
-    if (i.snapshot) api.snapshot(i.snapshot);
-    if (i.customQuery?.trim()) api.custom(i.customQuery);
+  if (initial) {
+    if (isString(initial)) {
+      api.custom(initial);
+    } else if (isQueryBuilder(initial)) {
+      api.custom(initial.toString());
+    } else {
+      const i = initial as FeatureQuery;
+      if (i.baselineStatus) api.baseline(i.baselineStatus);
+      if (i.baselineDateRange) api.range(i.baselineDateRange.start, i.baselineDateRange.end);
+      if (i.featureId) api.id(i.featureId);
+      if (i.group) api.group(i.group);
+      if (i.snapshot) api.snapshot(i.snapshot);
+      if (i.customQuery?.trim()) api.custom(i.customQuery);
+    }
   }
 
   return api;
@@ -100,7 +87,7 @@ export function q(initial?: QueryInput): QueryBuilder {
 
 export function normalizeQuery(input?: QueryInput): string {
   if (!input) return "";
-  if (typeof input === "string") return input.trim();
+  if (isString(input)) return input.trim();
   if (isQueryBuilder(input)) return input.toString();
   return q(input as FeatureQuery).toString();
 }

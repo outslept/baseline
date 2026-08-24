@@ -25,7 +25,7 @@
     }
   },
   "scripts": {
-    "build": "zshy",
+    "build": "tsdown",
     "prepublishOnly": "pnpm build",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix",
@@ -40,5 +40,4 @@
     "zshy": "^0.4.2"
   },
   "packageManager": "pnpm@10.17.1",
-  "zshy": "src/client.ts"
 }
