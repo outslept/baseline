@@ -34,8 +34,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
-    "eslint": "^9.24.0",
-    "neostandard": "^0.12.2",
+    "oxfmt": "^0.64.0",
+    "oxlint": "^1.79.0",
     "zshy": "^0.4.2"
   },
   "zshy": "src/client.ts"
