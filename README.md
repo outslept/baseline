@@ -2,10 +2,10 @@
 
 A tiny, readable TypeScript client for the Web Platform Status API. Fetch Baseline status and browser compatibility data with a clean, chainable API.
 
-# Quick Start
+## Quick Start
 
 ```ts
-import { createWebStatusClient, q } from "#";
+import { createWebStatusClient, q } from "baseline";
 
 const api = createWebStatusClient();
 
@@ -27,23 +27,24 @@ const recentNewCSS = await api.features(
 );
 ```
 
-# API
+## API
 
 ```ts
-import { createWebStatusClient, q } from "#";
+import { createWebStatusClient, q } from "baseline";
 const api = createWebStatusClient(options?);
 ```
 
-- options:
-  - `baseURL?: string` (default: `https://api.webstatus.dev/v1/features`)
-  - `timeout?: number` (ms, per attempt, default: `30000`)
-  - `retry?: number` (attempts, default: `3`)
-  - `backoff?: { base?: number; factor?: number; max?: number; jitter?: boolean }`
-  - `headers?: HeadersInit`
-  - `userAgent?: string`
-  - `fetch?: typeof fetch` (to inject your own)
+**Options:**
 
-Client methods:
+- `baseURL?: string` (default: `https://api.webstatus.dev/v1/features`)
+- `timeout?: number` (ms, per attempt, default: `30000`)
+- `retry?: number` (attempts, default: `3`)
+- `backoff?: { base?: number; factor?: number; max?: number; jitter?: boolean }`
+- `headers?: HeadersInit`
+- `userAgent?: string`
+- `fetch?: typeof fetch` (to inject your own implementation)
+
+**Client methods:**
 
 - `features(query?, opts?): Promise<Feature[]>`
 - `feature(id, opts?): Promise<Feature | null>`
@@ -56,17 +57,17 @@ Client methods:
 - `pages(query?, opts?): AsyncGenerator<ApiResponse>`
 - `stream(query?, opts?): AsyncGenerator<Feature>`
 
-Request options (opts):
+**Request options (`opts`):**
 
 - `signal?: AbortSignal`
 - `headers?: HeadersInit`
 - `timeout?: number`
 - `retry?: number`
 
-# Query builder
+## Query builder
 
 ```ts
-import { q } from "#";
+import { q } from "baseline";
 
 const query = q().baseline("widely").group("css").range("2023-01-01", "2024-12-31");
 
@@ -81,7 +82,7 @@ Shortcuts:
 - `q().custom('-baseline_status:limited')` // negation
 - `q().custom('baseline_status:newly OR baseline_status:widely')` // OR
 
-# Streaming and pagination
+## Streaming and pagination
 
 ```ts
 // Stream features one by one
@@ -97,7 +98,7 @@ for await (const page of api.pages(q().group("javascript"))) {
 
 The API paginates responses. Use `pages()` or `stream()` to iterate until `metadata.next_page_token` is absent. `metadata.total` may be present for total matches.
 
-# Data shape
+## Data shape
 
 The HTTP API returns:
 
@@ -117,8 +118,8 @@ Feature highlights:
 - Optional extras that may appear:
   - `developer_signals?: { link: string; upvotes?: number }`
   - `usage?:` per-browser usage, e.g. `{ chrome?: { daily?: number } }`
-  - `wpt?: { experimental?: { [browser]: { score?: number; metadata?: any } }, stable?: ... }`
+  - `wpt?: { experimental?: { [browser]: { score?: number; metadata?: Record<string, unknown> } }, stable?: ... }`
 
-# License
+## License
 
 MIT
