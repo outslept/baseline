@@ -44,6 +44,7 @@ const api = createWebStatusClient(options?);
   - `fetch?: typeof fetch` (to inject your own)
 
 Client methods:
+
 - `features(query?, opts?): Promise<Feature[]>`
 - `feature(id, opts?): Promise<Feature | null>`
 - `baseline(status, opts?): Promise<Feature[]>`
@@ -56,6 +57,7 @@ Client methods:
 - `stream(query?, opts?): AsyncGenerator<Feature>`
 
 Request options (opts):
+
 - `signal?: AbortSignal`
 - `headers?: HeadersInit`
 - `timeout?: number`
@@ -66,16 +68,14 @@ Request options (opts):
 ```ts
 import { q } from "#";
 
-const query = q()
-  .baseline("widely")
-  .group("css")
-  .range("2023-01-01", "2024-12-31");
+const query = q().baseline("widely").group("css").range("2023-01-01", "2024-12-31");
 
 const str = query.toString(); // "baseline_status:widely AND group:css AND baseline_date:2023-01-01..2024-12-31"
 const out = await api.features(query);
 ```
 
 Shortcuts:
+
 - `q().id("css.subgrid")`
 - `q().snapshot("ecmascript-2023")`
 - `q().custom('-baseline_status:limited')` // negation
@@ -100,11 +100,13 @@ The API paginates responses. Use `pages()` or `stream()` to iterate until `metad
 # Data shape
 
 The HTTP API returns:
+
 - `ApiResponse`
   - `data: Feature[]`
   - `metadata?: { next_page_token?: string; total?: number }`
 
 Feature highlights:
+
 - `feature_id: string`
 - `name: string`
 - `baseline: { status: "limited" | "newly" | "widely"; low_date?: string; high_date?: string }`
